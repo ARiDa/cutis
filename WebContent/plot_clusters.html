@@ -1,0 +1,435 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Plot Clusters</title>
+
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="js/myPolylineCluster.js"></script>
+<script language="javascript">
+
+
+	var map;	
+	var map_center = {lat: 39.88416971411215, lng: 116.31777707943927};
+	var track_trajectories = [];
+	var outliers = [];
+	
+	//show the log in the map
+	function CenterControlTextBox(controlDiv, map) {
+		
+		// Set CSS for the control border.
+		var controlUI = document.createElement('div');
+		controlUI.style.backgroundColor = '#fff';
+		controlUI.style.border = '2px solid #fff';
+		controlUI.style.borderRadius = '3px';
+		controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+		controlUI.style.cursor = 'pointer';
+		controlUI.style.marginBottom = '22px';
+		controlUI.style.textAlign = 'center';
+		controlUI.title = 'LogText';
+		controlDiv.appendChild(controlUI);
+
+		// Set CSS for the control interior.
+		var input = document.createElement('textarea');
+		input.name = "logtext";
+		input.maxLength = "100";
+		input.cols = "20";
+		input.rows = "5";
+				 
+		 $.ajax({
+			    url: 'rest/microgroupsonxml/log',
+			    type: 'GET',
+			    dataType: "text",  
+			    success: function(resp){  
+			    	 var t = document.createTextNode(resp);
+					 input.appendChild(t);
+					 controlUI.appendChild(input);
+			    }
+			});
+		 
+		
+	}
+	
+	function CenterControl(controlDiv, map) {
+		// Set CSS for the control border.
+		var controlUI = document.createElement('div');
+		controlUI.style.backgroundColor = '#fff';
+		controlUI.style.border = '2px solid #fff';
+		controlUI.style.borderRadius = '3px';
+		controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+		controlUI.style.cursor = 'pointer';
+		controlUI.style.marginBottom = '22px';
+		controlUI.style.textAlign = 'center';
+		controlUI.title = 'ShowClusters';
+		controlDiv.appendChild(controlUI);
+
+		// Set CSS for the control interior.
+		var controlText = document.createElement('div');
+		controlText.style.color = 'rgb(25,25,25)';
+		controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
+		controlText.style.fontSize = '16px';
+		controlText.style.lineHeight = '38px';
+		controlText.style.paddingLeft = '5px';
+		controlText.style.paddingRight = '5px';
+		controlText.innerHTML = 'Show Sub-trajectory Clusters';
+		controlUI.appendChild(controlText);
+		
+		// Setup the click event listeners: simply set the map to Chicago.
+		controlUI.addEventListener('click', function() {
+			//map.setCenter(map_center);
+			call_service_get();
+		});
+
+	}
+	
+	function call_log(){
+		//textbox
+		var centerControlDiv_textbox = document.createElement('div');
+		var centerControl_textbox= new CenterControlTextBox(centerControlDiv_textbox, map);
+		centerControlDiv_textbox.index = 1;
+		map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(centerControlDiv_textbox);
+	}
+	
+	function call_outlier(){
+		
+		$.ajax({
+			type : "GET",
+			url : 'rest/microgroupsonxml/all_outliers',
+			dataType : "json",
+			success : function(trajectories) {
+				
+		         alert(trajectories.length);
+				//todas as sub-trajetorias
+		       	 for(var i in trajectories){
+		       		
+		       		       		
+		       		var plotPlanCoordinates = [];
+			        var tid = trajectories[i].tid;
+			        
+		           	var coord_array = trajectories[i].coord_array;
+		           
+		           	 for(var j in coord_array){
+		           		
+		           		 var x = coord_array[j].x;
+	              		 var y = coord_array[j].y;
+	           			plotPlanCoordinates.push(new google.maps.LatLng(y,x));
+		           	 }
+		           	 
+		           	 var clusterid = -1;
+		           	 var microgroupid = -1;
+		           	
+		           	 var add_prop = {
+		           			trajid:  tid,
+		           			clusterid: clusterid,
+						    microgroupid: microgroupid							    
+					};
+		           
+		           	 var flightPath = new google.maps.Polyline({
+								path : plotPlanCoordinates,
+								geodesic : true,
+								strokeColor : '#696969',
+								strokeOpacity : 0.6,
+								strokeWeight : 6
+							});
+						
+					var myP = new myPolylineCluster(add_prop, flightPath);
+					myP.setMap(map);
+					outliers.push(myP);
+		  	    	  	
+			   }
+			}
+		});
+		
+	}
+	
+	function CenterControl_post(controlDiv, map) {
+		// Set CSS for the control border.
+		var controlUI = document.createElement('div');
+		controlUI.style.backgroundColor = '#fff';
+		controlUI.style.border = '2px solid #fff';
+		controlUI.style.borderRadius = '3px';
+		controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+		controlUI.style.cursor = 'pointer';
+		controlUI.style.marginBottom = '30px';
+		controlUI.style.textAlign = 'center';
+		controlUI.title = 'ComputeNextTimeWindow';
+		controlDiv.appendChild(controlUI);
+
+		// Set CSS for the control interior.
+		var controlText = document.createElement('div');
+		controlText.style.color = 'rgb(25,25,25)';
+		controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
+		controlText.style.fontSize = '16px';
+		controlText.style.lineHeight = '38px';
+		controlText.style.paddingLeft = '5px';
+		controlText.style.paddingRight = '5px';
+		controlText.innerHTML = 'Compute Next Sub-trajectory Clusters';
+		controlUI.appendChild(controlText);
+
+		// Setup the click event listeners: simply set the map to Chicago.
+		controlUI.addEventListener('click', function() {
+			//map.setCenter(map_center);
+			call_service_post();			
+		});
+		
+	}
+		
+	function initMap() {
+	  map = new google.maps.Map(document.getElementById('map'), {
+	    zoom: 100,
+	    center: {lat: 39.88416971411215, lng: 116.31777707943927},
+	    mapTypeId: google.maps.MapTypeId.TERRAIN
+	  });
+	  
+	// Create the DIV to hold the control and call the CenterControl() constructor
+		// passing in this DIV.
+		var centerControlDiv = document.createElement('div');
+		var centerControl = new CenterControl(centerControlDiv, map);
+		centerControlDiv.index = 1;
+		map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+		
+		//post
+		var centerControlDiv_post = document.createElement('div');
+		var centerControl_post = new CenterControl_post(centerControlDiv_post, map);
+		centerControlDiv_post.index = 1;
+		map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv_post);
+	
+				
+	  var listvalues = localStorage.getItem('parameters');
+		//pase the value 
+		//var parametersvalue = JSON.parse(listvalues);
+		// it look like this { "1": "value1", "2": "value2", "3": "value3" };
+		$.ajax({
+		    url: 'rest/microgroupsonxml/initMicroGroupService',
+		    type: 'POST',
+		    data: listvalues,
+		    contentType: 'application/json; charset=utf-8',
+		    dataType: 'json',
+		    async: false,
+		    success: function(msg) {
+		        alert('sucess');
+		    }
+		});
+	  
+	}
+
+
+
+// 	$(document).ready(function(){
+// 		$("button#button1").click(function(){
+	
+	function componentToHex(c) {
+    	var hex = c.toString(16);
+    	return hex.length == 1 ? "0" + hex : hex;
+	}
+	
+	function rgbToHex(r, g, b) {
+    	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+	}
+	
+	
+	function call_service_post(){
+		
+		alert('Take a print screen');
+		$.ajax({
+			type : "GET",
+			url : 'rest/microgroupsonxml/captureScreen',
+			dataType : "json",
+			success : function(msg) {
+				alert('sucess');
+			}			
+		});
+		
+		
+		// Removes the markers from the map (for micro-groups)
+		for (var i = 0; i < track_trajectories.length; i++) {
+			track_trajectories[i].setMap(null);
+			track_trajectories[i]=null;
+		  }
+		
+		track_trajectories = [];
+		
+		// Removes the markers from the map (for outliers)
+		for (var i = 0; i < outliers.length; i++) {
+			outliers[i].setMap(null);
+			outliers[i]=null;
+		  }
+		
+		outliers = [];
+		
+		$.ajax({
+			type : "POST",
+			url : 'rest/microgroupsonxml/post_clusters',
+			dataType : String,
+			success : function(e) {
+				alert('Success: ' + e);
+			}
+		});
+		
+		
+	}
+	
+	
+	function call_service_get(){
+		//alert("ticiana");
+		$.ajax({  
+		       type: "GET",  
+		       url: 'rest/microgroupsonxml/all_clusters',  
+		       dataType: "json",  
+		       success: function(resp){  
+		        
+		    	alert('sucess');
+				var index=-1; 
+		    	   
+		    	 for(var cluster in resp){
+		    		 
+		    		 var clusterid = resp[cluster].idCluster;
+		    		 var objects = resp[cluster].cluster_members;
+			         var color = rgbToHex(resp[cluster].color.red,resp[cluster].color.green,resp[cluster].color.blue);
+			         
+			        //para as representativas de cada microgroup
+			        /*	 var plotPlanCoordinates = [];
+			        	 var representative = resp[microgroup].representative;
+			        	 
+		            	 var coord_array = representative.coordArray;
+		                		
+		            	 for(var j in coord_array){
+		            		 var x = coord_array[j].x;
+		               		 var y = coord_array[j].y;
+		               		 plotPlanCoordinates.push(new google.maps.LatLng(y,x));
+		            	 }
+	               		
+	               		var flightPath = new google.maps.Polyline({
+	             	    	    path: plotPlanCoordinates,
+	             	    	    geodesic: true,
+	             	    	    strokeColor: color,
+	             	    	    strokeOpacity: 0.6,
+	             	    	    strokeWeight: 10
+	             	    });
+
+	       	    	  	flightPath.setMap(map);*/
+			         
+			         
+			         if(index==-1){
+							call_log();
+							call_outlier();
+					}
+	       	    	  	
+			         //todas as sub-trajetorias
+			         for(var microgroup in objects){
+			        	 
+			        	 /*for the representative*/
+						var representative = objects[microgroup].representative;
+						var representativeid = representative.tid;
+			        	 
+			        	 index = index + 1;
+			        	 
+			        	 var trajectories = objects[microgroup].objects;
+			        	 var microgroupid = objects[microgroup].idMicroGroup;
+			        	 
+			        	 for(var i in trajectories){
+				        	 var plotPlanCoordinates = [];
+				        	 var tid = trajectories[i].tid;
+			            	 var coord_array = trajectories[i].coordArray;
+			                		
+			            	 for(var j in coord_array){
+			            		 var x = coord_array[j].x;
+			               		 var y = coord_array[j].y;
+			               		 plotPlanCoordinates.push(new google.maps.LatLng(y,x));
+			            	 }
+			            	 
+			            	 var add_prop = {
+									    trajid:  tid,
+									    clusterid: clusterid,
+									    microgroupid: microgroupid								    
+									};
+			            	 
+			            	 var flightPath;
+			            	 
+			            	 if(tid == representativeid){							
+								  // Define a symbol using SVG path notation, with an opacity of 1.
+								  var lineSymbol = {
+								    path: 'M 0,-1 0,1',
+								    strokeColor : color,
+								    strokeOpacity: 1,
+								    scale: 4
+								  };
+
+								  // Create the polyline, passing the symbol in the 'icons' property.
+								  // Give the line an opacity of 0.
+								  // Repeat the symbol at intervals of 20 pixels to create the dashed effect.
+								  flightPath = new google.maps.Polyline({
+								    path: plotPlanCoordinates,
+								    strokeOpacity: 0,
+								    icons: [{
+								      icon: lineSymbol,
+								      offset: '0',
+								      repeat: '20px'
+								    }]
+								  });
+								
+								
+							}
+							
+							else{
+								
+								flightPath = new google.maps.Polyline({
+									path : plotPlanCoordinates,
+									geodesic : true,
+									strokeColor : color,
+									strokeOpacity : 0.6,
+									strokeWeight : 6
+								});
+							}
+							
+							var myP = new myPolylineCluster(add_prop, flightPath);
+							myP.setMap(map);
+							track_trajectories.push(myP);
+		       	    	  	
+			       	    	/* google.maps.event.addListener(flightPath,"click",function(polyMouseEvent){
+			       	    		alert("Moving Object ID : '" + tid + "' \n"+
+			       	    				"Micro-Group ID : '" + microgroupid + "' \n");
+		
+			       	        });*/
+		       	    	  	
+				         }	  
+			          }//end for microgroup
+			         
+		    	 }
+		       },  
+		       error: function(e){  
+		         alert('Error: ' + e);  
+		       }  
+		     });
+	}
+   // });
+		
+	//	$("button#button2").click(function(){
+	//		alert(1);
+	//		initMap();	
+	//	});
+	//});//ready
+
+</script>
+<script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAnV43SziEBhJlbqBI9vM0gtKotMRDb6Wc&signed_in=true&callback=initMap">
+</script>
+
+<style>
+html, body { height: 100%; margin: 0; padding: 0; }
+#map { height: 100%; }
+</style>
+</head>
+
+<body>
+
+<div id="map"> </div>
+
+</body>
+</html>
+
+
+
+
+
+

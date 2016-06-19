@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html>
+<head>
+<title>Input Configuration</title>
+<link rel="stylesheet" type="text/css" href="css/estilo.css">
+</head>
+<body class="body" onload="stopConsumeDataStream();">
+
+	<script>
+		//habilita o consumo de streams
+		function openDataStream() {
+			document.getElementById('start_consume').disabled = false;
+			document.getElementById('stop_consume').disabled = false;
+
+			document.getElementById("database_name").disabled = false;
+			document.getElementById("database_ip").disabled = false;
+			document.getElementById("database_port").disabled = false;
+			document.getElementById("date_start_time").disabled = false;
+			document.getElementById("time_start_time").disabled = false;
+			document.getElementById("time_window_size").disabled = false;
+
+			disableParameters();
+		}
+
+		function startConsumeDataStream(){
+			
+		}
+		
+		function stopConsumeDataStream() {
+			document.getElementById('start_consume').disabled = true;
+			document.getElementById('stop_consume').disabled = true;
+
+			document.getElementById("database_name").disabled = true;
+			document.getElementById("database_ip").disabled = true;
+			document.getElementById("database_port").disabled = true;
+			document.getElementById("date_start_time").disabled = true;
+			document.getElementById("time_start_time").disabled = true;
+			document.getElementById("time_window_size").disabled = true;
+
+			disableParameters();
+		}
+	</script>
+
+	<div id="setting" class="relative_setting background-1" align="center">
+
+		<div id="metadata" class="relative_metadata">
+			<button class="button" id="open_data_stream"
+				onclick="openDataStream()">Open the Data Stream...</button>
+			<form class="form">
+				<fieldset>
+					<legend>Metadata:</legend>
+					
+					<label for="database_name">Data Stream Topic: </label>
+					<input type="text" id="database_name" name="database" size="20"><br><br>
+						
+					<label for="database_ip">Server IP:
+					<input type="text" id="database_ip" name="ip" size="20"></label> <br><br>
+						
+					<label for="database_port">Server Port:</label>
+					<input type="text" id="database_port" name="port" size="20"> <br><br>
+					
+					<label for="date_start_time">Start time:</label>
+					<input type="date" id="date_start_time" name="date_start_time" > 
+					<input type="time" id="time_start_time" name="time_start_time" ><br><br>
+					
+					<label for="time_window_size">Time window(in seconds): </label>
+					<input type="text" id="time_window_size"
+						name="time_window_size" size="20"><br><br> 
+				</fieldset>
+			</form>
+
+		</div>
+		<div id="buttons" class="relative_buttons">
+			<button class="button" id="start_consume"
+				onclick="startConsumeDataStream()">Start to consume</button>
+			<button class="button" id="stop_consume"
+				onclick="stopConsumeDataStream()">Stop to consume</button>
+		</div>
+
+	</div><br>
+
+	<script>
+		//execucao dos algoritmos
+		var global_anchor = 'plot_microgroups';
+
+		function setAnchorClass(id) {
+			document.getElementById(global_anchor).className = "a";
+			document.getElementById(id).className = "active";
+			global_anchor = id;
+		}
+
+		function disableParameters() {
+			document.getElementById("eps").disabled = true;
+			document.getElementById("minpoints").disabled = true;
+			document.getElementById("sigma").disabled = true;
+			document.getElementById("microgroup_voting").disabled = true;
+			document.getElementById("flock_duration").disabled = true;
+			document.getElementById("flock_radius").disabled = true;
+			document.getElementById("flock_size").disabled = true;
+			
+		}
+
+		function ableMGparameters() {
+			document.getElementById("eps").disabled = false;
+			document.getElementById("minpoints").disabled = false;
+			document.getElementById("sigma").disabled = false;
+			document.getElementById("microgroup_voting").disabled = false;
+			document.getElementById("flock_duration").disabled = true;
+			document.getElementById("flock_radius").disabled = true;
+			document.getElementById("flock_size").disabled = true;
+		}
+
+		function ableTFlockparameters() {
+			document.getElementById("eps").disabled = false;
+			document.getElementById("minpoints").disabled = false;
+			document.getElementById("sigma").disabled = false;
+			document.getElementById("microgroup_voting").disabled = false;
+			document.getElementById("flock_duration").disabled = false;
+			document.getElementById("flock_radius").disabled = false;
+			document.getElementById("flock_size").disabled = false;
+		}
+
+		function runAlgorithm() {
+
+			var database_name = document.getElementById("database_name").value;
+			var database_ip = document.getElementById("database_ip").value;
+			var database_port = document.getElementById("database_port").value;
+			var date_start_time = document.getElementById("date_start_time").value
+					+ " " + document.getElementById("time_start_time").value;
+			var time_window_size = document.getElementById("time_window_size").value;
+
+			var eps = document.getElementById("eps").value;
+			var minpoints = document.getElementById("minpoints").value;
+			var sigma =  document.getElementById("sigma").value;
+			var mgradius = document.getElementById("microgroup_voting").value;
+			var duration = document.getElementById("flock_duration").value;
+			
+			var size = document.getElementById("flock_size").value;
+			var radius = document.getElementById("flock_radius").value;
+
+			var listvalues = {
+				"database_name" : database_name,
+				"database_ip" : database_ip,
+				"database_port" : database_port,
+				"date_start_time" : date_start_time,
+				"time_window_size" : time_window_size,
+				"eps" : eps,
+				"minpoints" : minpoints,
+				"sigma" : sigma,
+				"mgradius" : mgradius,
+				"duration" : duration,
+				"size" : size,
+				"radius" : radius
+			}
+			localStorage.setItem('parameters', JSON.stringify(listvalues));
+
+			var page = "http://localhost:8080/mdm-demo-web/";
+			window.open(page + global_anchor + ".html");
+		}
+	</script>
+
+	<div>
+		<div>
+			<ul>
+				<li><a id="plot_microgroups"
+					onclick="setAnchorClass(this.id);ableMGparameters();">CUTiS Micro-groups</a></li>
+				<li><a id="plot_clusters"
+					onclick="setAnchorClass(this.id);ableMGparameters();">CUTiS
+						Clustering</a></li>
+				<li><a id="plot_flocks"
+					onclick="setAnchorClass(this.id);ableTFlockparameters()">CUTiS
+						Flocks</a></li>
+						
+<!-- 				<li><a id="dbscan" -->
+<!-- 					onclick="setAnchorClass(this.id);disableParameters()">DBSCAN -->
+<!-- 						Clustering</a></li> -->
+<!-- 				<li><a id="staticflock" -->
+<!-- 					onclick="setAnchorClass(this.id);disableParameters()">Longest -->
+<!-- 						Duration Flock</a></li> -->
+<!-- 				<li><a id="traclus" -->
+<!-- 					onclick="setAnchorClass(this.id);disableParameters()">TraClus</a></li> -->
+				<li><a href="http://www.lia.ufc.br/~ticianalc">About us</a></li>
+			</ul>
+		</div>
+
+		<div style="margin-left: 25%;  padding: 1px 16px; height: 1000px;">
+			<form class="form">
+				<fieldset>
+				
+					<legend>Parameters Setting:</legend>
+					
+					<div style="margin:0;padding:0">
+					<fieldset>
+					
+						<legend>Micro-group Parameters:</legend>
+						
+						 <div>
+						   <label for="eps">&#949 : </label>
+							<input type="text" id="eps" name="eps" size="20" >
+						
+						   <label for="minpoints">&#964 :</label>
+							<input type="text" id="minpoints" name="minpoints" size="20" >					   
+
+						   <label for="microgroup_voting">&#961 : </label>
+						   <input type="text" id="microgroup_voting" name="microgroup_voting" size="20" >
+
+						   <label for="sigma">&#963 :</label>
+						   <input type="text" id="sigma" name="sigma"  size="20">
+						 </div>
+					</fieldset>
+					</div>
+					
+					<br>
+					
+					<div style="margin:0;padding:0">
+					<fieldset>
+					
+						<legend>Flock Parameters:</legend>
+						
+						 <div>
+						   <label for="flock_duration"><i>k:</i></label>
+							<input type="text" id="flock_duration" name="flock_duration" size="20">
+						
+						   <label for="flock_size"><i>m:</i></label>
+							<input type="text" id="flock_size" name="flock_size" size="20">
+					
+						    <label for="flock_radius"><i>r:</i></label>
+						   <input type="text" id="flock_radius" name="flock_radius" size="20">
+
+						 </div>
+					</fieldset>
+					</div>				
+				
+				<br>
+				
+					<input type="submit" onclick="runAlgorithm()" value="Run">
+					<input type="submit" onClick="disableParameters()" value="Stop">
+				</fieldset>
+			</form>
+		</div>
+
+	</div>
+
+</body>
+</html>
